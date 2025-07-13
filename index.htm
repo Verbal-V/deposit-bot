@@ -117,6 +117,15 @@
   const btn = document.getElementById('generate-btn');
   const resultContainer = document.getElementById('signal-result');
   const timeContainer = document.getElementById('signal-time');
+    function updateDeviceTime() {
+    const now = new Date();
+    const hh  = now.getHours().toString().padStart(2, '0');
+    const mm  = now.getMinutes().toString().padStart(2, '0');
+    const ss  = now.getSeconds().toString().padStart(2, '0');
+    timeContainer.textContent = `${hh}:${mm}:${ss}`;
+  }
+  updateDeviceTime();
+  setInterval(updateDeviceTime, 1000);
   const pairSelect = document.getElementById('currency-pair');
   const tfSelect = document.getElementById('timeframe');
 
@@ -153,7 +162,7 @@
     setTimeout(() => {
       // После анализа вместо прежнего innerHTML:
 resultContainer.innerHTML = `
-<div class="signal-message" style="padding:20px; text-align:center; font-size:20px; color:#333;">
+<div class="signal-message" style="padding:0px; text-align:center; font-size:20px; color:#333;">
   <strong style="color: red;">Oops! Your balance is empty.</strong><br><br>
   <strong>Deposit in the bot and press</strong> <strong style="color: #4CD964; font-weight:900;"> Check Deposit</strong>.
 </div>
