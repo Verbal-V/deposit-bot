@@ -112,71 +112,66 @@
             </div>
         </div>
     </div>
-  <script>
+<script>
 document.addEventListener('DOMContentLoaded', () => {
-  const btn              = document.getElementById('generate-btn');
-  const resultContainer  = document.getElementById('signal-result');
-  const timeContainer    = document.getElementById('signal-time');
-  const pairSelect       = document.getElementById('currency-pair');
-  const tfSelect         = document.getElementById('timeframe');
+  const btn             = document.getElementById('generate-btn');
+  const resultContainer = document.getElementById('signal-result');
+  const timeContainer   = document.getElementById('signal-time');
+  const tfSelect        = document.getElementById('timeframe');
 
-  // Если хоть одного элемента нет — выходим
-  if (!btn || !resultContainer || !timeContainer || !pairSelect || !tfSelect) {
-    console.error('Signal bot script: required element not found');
+  if (!btn || !resultContainer || !timeContainer || !tfSelect) {
+    console.error('Signal bot script: missing element');
     return;
   }
 
-  // Функция обновления времени устройства
+  // Обновление часов
   function updateDeviceTime() {
     const now = new Date();
-    const hh  = now.getHours().toString().padStart(2, '0');
-    const mm  = now.getMinutes().toString().padStart(2, '0');
-    const ss  = now.getSeconds().toString().padStart(2, '0');
+    const hh  = String(now.getHours()).padStart(2, '0');
+    const mm  = String(now.getMinutes()).padStart(2, '0');
+    const ss  = String(now.getSeconds()).padStart(2, '0');
     timeContainer.textContent = `${hh}:${mm}:${ss}`;
   }
   updateDeviceTime();
   setInterval(updateDeviceTime, 1000);
 
   btn.addEventListener('click', () => {
-    const tfText = tfSelect.value;
-    let num = parseInt(tfText, 10);
+    // Вычисляем cooldown
+    let num = parseInt(tfSelect.value, 10);
     if (isNaN(num)) num = 5;
-    const secs = /minute/.test(tfText) ? num * 60 : num;
-    const analysisMs = 4000;
-    const cooldownSec = secs;
+    const secs     = /minute/.test(tfSelect.value) ? num * 60 : num;
+    const analysis = 4000;
 
-    // Показ индикатора анализа
+    // Показываем анимацию анализа
     resultContainer.innerHTML = `
       <div class="signal-analyzing">
-        Analyzing
-        <span class="dots"><span>.</span><span>.</span><span>.</span></span>
+        Analyzing<span class="dots"><span>.</span><span>.</span><span>.</span></span>
         <div class="progress-bar"><div class="progress-fill"></div></div>
       </div>
     `;
-    const fillEl = resultContainer.querySelector('.progress-fill');
-    fillEl.style.width = '0';
-    fillEl.style.transition = \`width \${analysisMs}ms linear\`;
-    setTimeout(() => fillEl.style.width = '100%', 50);
+    const fill = resultContainer.querySelector('.progress-fill');
+    fill.style.width      = '0%';
+    fill.style.transition = \`width ${analysis}ms linear\`;
+    setTimeout(() => fill.style.width = '100%', 50);
 
     btn.disabled = true;
     timeContainer.textContent = '';
 
+    // По окончании анализа
     setTimeout(() => {
-      // Показ сообщения о пополнении
+      // Закрываем template literal здесь
       resultContainer.innerHTML = `
-        <div class="signal-message" style="padding:0; text-align:center; font-size:20px; color:#333;">
+        <div class="signal-message" style="text-align:center; font-size:20px; color:#333;">
           <strong style="color:red;">Oops! Your balance is empty.</strong><br><br>
           <strong>Deposit in the bot and press</strong>
-          <strong style="color:#4CD964; font-weight:900;"> Check Deposit</strong>
+          <strong style="color:#4CD964; font-weight:900;">Check Deposit</strong>
         </div>
         <div class="button-group" style="margin-top:20px; text-align:center;">
-          <button class="button button-green">
-            Deposit Funds
-          </button>
+          <button class="button button-green">Deposit Funds</button>
         </div>
-      `;
+      `; // ← here
 
-      // Вешаем открытие новой вкладки
+      // Привязываем новое событие клика
       const depositBtn = resultContainer.querySelector('.button-green');
       depositBtn.addEventListener('click', () => {
         window.open(
@@ -185,8 +180,8 @@ document.addEventListener('DOMContentLoaded', () => {
         );
       });
 
-      // Таймер перезарядки кнопки Get Signal
-      let rem = cooldownSec;
+      // Отсчёт до разблокировки главной кнопки
+      let rem = secs;
       btn.textContent = \`Get signal (\${rem}s)\`;
       const iv = setInterval(() => {
         rem--;
@@ -198,11 +193,10 @@ document.addEventListener('DOMContentLoaded', () => {
           btn.textContent = \`Get signal (\${rem}s)\`;
         }
       }, 1000);
-    }, analysisMs);
+    }, analysis);
   });
 });
 </script>
-
 
 </body>
 </html>
