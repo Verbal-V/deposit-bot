@@ -112,77 +112,85 @@
             </div>
         </div>
     </div>
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-  const btn             = document.getElementById('generate-btn');
+    <script>
+(function(){
+  const btn = document.getElementById('generate-btn');
   const resultContainer = document.getElementById('signal-result');
-  const timeContainer   = document.getElementById('signal-time');
-  const tfSelect        = document.getElementById('timeframe');
-
-  if (!btn || !resultContainer || !timeContainer || !tfSelect) {
-    console.error('Signal bot script: missing element');
-    return;
-  }
-
-  // Обновление часов
-  function updateDeviceTime() {
+  const timeContainer = document.getElementById('signal-time');
+    function updateDeviceTime() {
     const now = new Date();
-    const hh  = String(now.getHours()).padStart(2, '0');
-    const mm  = String(now.getMinutes()).padStart(2, '0');
-    const ss  = String(now.getSeconds()).padStart(2, '0');
+    const hh  = now.getHours().toString().padStart(2, '0');
+    const mm  = now.getMinutes().toString().padStart(2, '0');
+    const ss  = now.getSeconds().toString().padStart(2, '0');
     timeContainer.textContent = `${hh}:${mm}:${ss}`;
   }
   updateDeviceTime();
   setInterval(updateDeviceTime, 1000);
+  const pairSelect = document.getElementById('currency-pair');
+  const tfSelect = document.getElementById('timeframe');
 
   btn.addEventListener('click', () => {
-    // Вычисляем cooldown
-    let num = parseInt(tfSelect.value, 10);
-    if (isNaN(num)) num = 5;
-    const secs     = /minute/.test(tfSelect.value) ? num * 60 : num;
-    const analysis = 4000;
+    const tfText = tfSelect.value;
+    let secs;
+    const num = parseInt(tfText, 10) || 5;
+    if (/minute/.test(tfText)) {
+      secs = num * 60;
+    } else {
+      secs = num;
+    }
+    const analysisMs = 4000;    // фиксированное время анализа: 4 сек
+    const cooldownSec = secs;
 
-    // Показываем анимацию анализа
+    // Показываем индикатор анализа
     resultContainer.innerHTML = `
       <div class="signal-analyzing">
-        Analyzing<span class="dots"><span>.</span><span>.</span><span>.</span></span>
-        <div class="progress-bar"><div class="progress-fill"></div></div>
+        Analyzing
+        <span class="dots"><span>.</span><span>.</span><span>.</span></span>
+        <div class="progress-bar">
+          <div class="progress-fill"></div>
+        </div>
       </div>
     `;
-    const fill = resultContainer.querySelector('.progress-fill');
-    fill.style.width      = '0%';
-    fill.style.transition = \`width ${analysis}ms linear\`;
-    setTimeout(() => fill.style.width = '100%', 50);
-
+    const fillEl = resultContainer.querySelector('.progress-fill');
+    fillEl.style.width = '0';
+    fillEl.style.transition = `width ${analysisMs}ms linear`;
+    setTimeout(() => fillEl.style.width = '100%', 50);
     btn.disabled = true;
     timeContainer.textContent = '';
 
-    // По окончании анализа
+    // После анализа показываем призыв к действию
     setTimeout(() => {
-      // Закрываем template literal здесь
-      resultContainer.innerHTML = `
-        <div class="signal-message" style="text-align:center; font-size:20px; color:#333;">
-          <strong style="color:red;">Oops! Your balance is empty.</strong><br><br>
-          <strong>Deposit in the bot and press</strong>
-          <strong style="color:#4CD964; font-weight:900;">Check Deposit</strong>
-        </div>
-        <div class="button-group" style="margin-top:20px; text-align:center;">
-          <button class="button button-green">Deposit Funds</button>
-        </div>
-      `; // ← here
+      // После анализа вместо прежнего innerHTML:
+resultContainer.innerHTML = `
+<div class="signal-message" style="padding:0px; text-align:center; font-size:20px; color:#333;">
+  <strong style="color: red;">Oops! Your balance is empty.</strong><br><br>
+  <strong>Deposit in the bot and press</strong> <strong style="color: #4CD964; font-weight:900;"> Check Deposit</strong>
+</div>
 
-      // Привязываем новое событие клика
-      const depositBtn = resultContainer.querySelector('.button-green');
-      depositBtn.addEventListener('click', () => {
-        window.open(
-          'https://po-ru4.click/cabinet/demo-high-low/?try-demo=1&redirectUrl=cabinet/deposit-step-1&utm_campaign=817156&utm_source=affiliate&utm_medium=sr&a=JngaS3hJib11Sp&ac=sa_ngv2',
-          '_blank'
-        );
-      });
 
-      // Отсчёт до разблокировки главной кнопки
-      let rem = secs;
-      btn.textContent = \`Get signal (\${rem}s)\`;
+<div class="button-group" style="margin-top:20px; text-align:center;">
+  <button 
+    class="button button-green"
+    onclick="window.open(
+      'https://po-ru4.click/cabinet/demo-high-low/?try-demo=1&redirectUrl=cabinet/deposit-step-1&utm_campaign=817156&utm_source=affiliate&utm_medium=sr&a=JngaS3hJib11Sp&ac=sa_ngv2',
+      '_blank'
+    );"
+  >
+
+  </button>
+</div>
+
+  Deposit Funds
+</button>
+
+  </div>
+`;
+
+      timeContainer.textContent = '';
+
+      // Запускаем таймер повторного нажатия
+      let rem = cooldownSec;
+      btn.textContent = `Get signal (${rem}s)`;
       const iv = setInterval(() => {
         rem--;
         if (rem <= 0) {
@@ -190,12 +198,12 @@ document.addEventListener('DOMContentLoaded', () => {
           btn.textContent = 'Get signal';
           btn.disabled = false;
         } else {
-          btn.textContent = \`Get signal (\${rem}s)\`;
+          btn.textContent = `Get signal (${rem}s)`;
         }
       }, 1000);
-    }, analysis);
+    }, analysisMs);
   });
-});
+})();
 </script>
 
 </body>
