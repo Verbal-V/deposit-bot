@@ -136,145 +136,143 @@
   </div>
 
   <script>
-    // stubs для языкового селектора
-    function toggleLangDropdown(){};
-    function changeLanguage(){};
+ // stubs для языкового селектора
+function toggleLangDropdown(){};
+function changeLanguage(){};
 
-    (function(){
-      const btn        = document.getElementById('generate-btn');
-      const resultEl   = document.getElementById('signal-result');
-      const timeEl     = document.getElementById('signal-time');
-      const chartDiv   = document.getElementById('chart-container');
-      const chartHeader = document.querySelector('.chart-header');
-      const canvas     = document.getElementById('area-canvas');
-      const ctx        = canvas.getContext('2d');
-      const H          = 200;  // высота графика
+(function(){
+  const btn         = document.getElementById('generate-btn');
+  const resultEl    = document.getElementById('signal-result');
+  const timeEl      = document.getElementById('signal-time');
+  const chartDiv    = document.getElementById('chart-container');
+  const chartHeader = document.querySelector('.chart-header');
+  const canvas      = document.getElementById('area-canvas');
+  const ctx         = canvas.getContext('2d');
+  const H           = 200;    // высота графика
+  const duration    = 6000;   // длительность анализа
 
-      function updateTime(){
-        const now = new Date();
-        timeEl.textContent = now.toTimeString().slice(0,8);
-      }
-      updateTime();
-      setInterval(updateTime,1000);
+  function updateTime(){
+    const now = new Date();
+    timeEl.textContent = now.toTimeString().slice(0,8);
+  }
+  updateTime();
+  setInterval(updateTime,1000);
 
-      function genSeries(n){
-        const arr = [];
-        let val = 100 + Math.random()*10;
-        for(let i=0;i<n;i++){
-          val += (Math.random()-0.5)*2;
-          arr.push(val);
-        }
-        return arr;
-      }
+  function genSeries(n){
+    const arr = [];
+    let val = 100 + Math.random()*10;
+    for(let i=0; i<n; i++){
+      val += (Math.random()-0.5)*2;
+      arr.push(val);
+    }
+    return arr;
+  }
 
-      btn.addEventListener('click', function(){
-        const points   = 20;
-        const duration = 6000;
-        btn.disabled = true;
-        timeEl.textContent = '';
+  btn.addEventListener('click', function(){
+    const points = 20;
+    btn.disabled = true;
+    timeEl.textContent = '';
 
-        // показываем прогресс-анализ
-        resultEl.innerHTML = `
-          <div class="signal-analyzing">
-            Analyzing<span class="dots"><span>.</span><span>.</span><span>.</span></span>
-            <div class="progress-bar"><div class="progress-fill"></div></div>
-          </div>`;
-        const fill = resultEl.querySelector('.progress-fill');
-        fill.style.transition = 'width '+duration+'ms linear';
-        setTimeout(()=> fill.style.width='100%', 50);
+    // показываем прогресс-анализ
+    resultEl.innerHTML = `
+      <div class="signal-analyzing">
+        Analyzing<span class="dots"><span>.</span><span>.</span><span>.</span></span>
+        <div class="progress-bar"><div class="progress-fill"></div></div>
+      </div>`;
+    const fill = resultEl.querySelector('.progress-fill');
+    fill.style.transition = 'width '+duration+'ms linear';
+    setTimeout(() => fill.style.width = '100%', 50);
 
-        // показываем заголовок и контейнер графика
-        chartHeader.style.display = 'flex';
-        chartDiv.style.display    = 'block';
-        canvas.width  = chartDiv.clientWidth;
-        canvas.height = H;
+    // показываем график
+    chartHeader.style.display = 'flex';
+    chartDiv.style.display    = 'block';
+    canvas.width  = chartDiv.clientWidth;
+    canvas.height = H;
 
-        const data = genSeries(points);
-        const min  = Math.min(...data), max = Math.max(...data);
-        const W    = canvas.width;
-        const step = W/(points-1);
-
-        let start = null;
-        function drawFrame(ts){
-          if(!start) start = ts;
-          const elapsed = ts - start;
-          const t       = Math.min(elapsed/duration,1);
-          const upto    = t*(points-1);
-          const idx     = Math.floor(upto);
-          const frac    = upto - idx;
-
-          ctx.clearRect(0,0,W,H);
-          ctx.beginPath();
-          for(let i=0;i<=idx;i++){
-            const x = i*step;
-            const y = H - ((data[i]-min)/(max-min))*H;
-            if(i===0) ctx.moveTo(x,y);
-            else ctx.lineTo(x,y);
-          }
-          if(idx < points-1){
-            const x = (idx+frac)*step;
-            const y = H - ((data[idx+1]-min)/(max-min))*H;
-            ctx.lineTo(x,y);
-          }
-          ctx.strokeStyle = 'var(--accent-green)';
-          ctx.lineWidth   = 2;
-          ctx.stroke();
-
-          ctx.lineTo((idx+frac)*step,H);
-          ctx.lineTo(0,H);
-          ctx.closePath();
-          ctx.fillStyle = 'rgba(76,175,80,0.2)';
-          ctx.fill();
-
-          if(t<1) requestAnimationFrame(drawFrame);
-        }
-        requestAnimationFrame(drawFrame);
-
-        // по окончании
-        setTimeout(()=>{
-          chartDiv.style.display    = 'none';
-          chartHeader.style.display = 'none';
-
-          const action = Math.random()<0.5?'BUY':'SELL';
-          const prob   = (Math.random()*48+52).toFixed(2)+'%';
-          const nowStr = new Date().toLocaleTimeString();
-          const pair   = document.getElementById('currency-pair').value;
-          const tf     = document.getElementById('timeframe').value;
-
-          resultEl.innerHTML = `
-          <div class="signal-message" style="text-align:center; font-size:20px; color:#333;">
-            <strong style="color: red;">Oops! Your balance is empty.</strong><br><br>
-            <strong>Deposit in the bot and press</strong>
-            <strong style="color: #4CD964; font-weight:900;"> Check Deposit</strong>
-          </div>
-          <div class="button-group" style="margin-top:20px; text-align:center;">
-            <button class="button button-green"
-              onclick="window.open(
-                'https://u3.shortink.io/cabinet/demo-high-low/?try-demo=1&redirectUrl=cabinet/deposit-step-1&utm_campaign=817156&utm_source=affiliate&utm_medium=sr&a=JngaS3hJib11Sp&ac=youar-ng&code=QQK015',
-                '_blank'
-              );">
-              Deposit Funds
-            </button>
-          </div>`;
-
-          // откат кнопки
-          const num  = parseInt(tf,10)||5;
-          const secs = /minute/.test(tf)?num*60:num;
-          let rem = secs;
-          btn.textContent = `Get signal (${rem}s)`;
-          const iv = setInterval(()=>{
-            rem--;
-            if(rem<=0){
-              clearInterval(iv);
-              btn.textContent = 'Get signal';
-              btn.disabled = false;
-            } else {
-              btn.textContent = `Get signal (${rem}s)`;
-            }
-          },1000);
-        }, duration);
+    // через небольшую задержку проматываем вниз
+    setTimeout(() => {
+      window.scrollTo({
+        top: document.documentElement.scrollHeight,
+        behavior: 'smooth'
       });
-    })();
+    }, 100);
+
+    // отрисовываем анимированный график
+    const data = genSeries(points);
+    const min  = Math.min(...data), max = Math.max(...data);
+    const W    = canvas.width, step = W/(points-1);
+    let start = null;
+
+    function drawFrame(ts){
+      if(!start) start = ts;
+      const t    = Math.min((ts - start)/duration,1);
+      const upto = t*(points-1);
+      const idx  = Math.floor(upto);
+      const frac = upto - idx;
+
+      ctx.clearRect(0,0,W,H);
+      ctx.beginPath();
+      for(let i=0; i<=idx; i++){
+        const x = i*step;
+        const y = H - ((data[i]-min)/(max-min))*H;
+        i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+      }
+      if(idx < points-1){
+        const x = (idx+frac)*step;
+        const y = H - ((data[idx+1]-min)/(max-min))*H;
+        ctx.lineTo(x,y);
+      }
+      ctx.strokeStyle = 'var(--accent-green)';
+      ctx.lineWidth   = 2;
+      ctx.stroke();
+      ctx.lineTo((idx+frac)*step,H);
+      ctx.lineTo(0,H);
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(76,175,80,0.2)';
+      ctx.fill();
+
+      if(t < 1) requestAnimationFrame(drawFrame);
+    }
+    requestAnimationFrame(drawFrame);
+
+    // окончание анализа
+    setTimeout(() => {
+      chartDiv.style.display    = 'none';
+      chartHeader.style.display = 'none';
+      resultEl.innerHTML = `
+        <div class="signal-message" style="text-align:center; font-size:20px; color:#333;">
+          <strong style="color: red;">Oops! Your balance is empty.</strong><br><br>
+          <strong>Deposit in the bot and press</strong>
+          <strong style="color: #4CD964; font-weight:900;"> Check Deposit</strong>
+        </div>
+        <div class="button-group" style="margin-top:20px; text-align:center;">
+          <button class="button button-green"
+            onclick="window.open(
+              'https://u3.shortink.io/cabinet/demo-high-low/?try-demo=1&redirectUrl=cabinet/deposit-step-1&utm_campaign=817156&utm_source=affiliate&utm_medium=sr&a=JngaS3hJib11Sp&ac=youar-ng&code=QQK015',
+              '_blank'
+            );">
+            Deposit Funds
+          </button>
+        </div>`;
+      const tfText = document.getElementById('timeframe').value;
+      const num    = parseInt(tfText, 10) || 5;
+      const secs   = /minute/.test(tfText) ? num*60 : num;
+      let rem = secs;
+      btn.textContent = `Get signal (${rem}s)`;
+      const iv = setInterval(() => {
+        rem--;
+        if(rem <= 0){
+          clearInterval(iv);
+          btn.textContent = 'Get signal';
+          btn.disabled = false;
+        } else {
+          btn.textContent = `Get signal (${rem}s)`;
+        }
+      }, 1000);
+    }, duration);
+  });
+})();
+
   </script>
   
 </body>
